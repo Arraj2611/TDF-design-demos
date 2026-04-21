@@ -9,8 +9,7 @@ class IO {
   observe() {} unobserve() {} disconnect() {} takeRecords() { return []; }
   root = null; rootMargin = ''; thresholds = [];
 }
-// @ts-expect-error assign polyfill
-globalThis.IntersectionObserver = IO;
+globalThis.IntersectionObserver = IO as unknown as typeof IntersectionObserver;
 
 // matchMedia polyfill
 Object.defineProperty(window, 'matchMedia', {

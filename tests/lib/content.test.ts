@@ -30,14 +30,17 @@ describe('CONTENT dictionary', () => {
       expect(c.foot).toBeTruthy();
     });
 
-    it(`${lang} hero.stats includes "15,000+" power looms stat`, () => {
+    it(`${lang} hero.stats includes "15,000+" power looms stat with loom-related label`, () => {
       const looms = CONTENT[lang].hero.stats.find((s) => /15,?000|१५,?०००/.test(s.n));
       expect(looms).toBeDefined();
+      expect(looms?.l).toMatch(/loom|लूम/i);
     });
 
-    it(`${lang} about timeline includes 1761 Peshwa entry`, () => {
+    it(`${lang} about timeline includes 1761 Peshwa entry with patronage context`, () => {
       const peshwa = CONTENT[lang].about.timeline.find((e) => e.y === '1761' || e.y === '१७६१');
       expect(peshwa).toBeDefined();
+      expect(peshwa?.c).toMatch(/Patronage|राजाश्रय/i);
+      expect(peshwa?.t).toMatch(/Peshwa|पेशवा/i);
     });
   });
 });

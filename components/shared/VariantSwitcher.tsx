@@ -1,11 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { VARIANTS } from '@/lib/versions';
 
-export function VariantSwitcher({ currentSlug }: { currentSlug?: string }) {
+export function VariantSwitcher({ currentSlug: currentSlugProp }: { currentSlug?: string } = {}) {
+  const pathname = usePathname();
+  // Derive from route if not supplied
+  const currentSlug = currentSlugProp ?? pathname?.split('/').filter(Boolean)[0];
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);

@@ -3,12 +3,14 @@
 import { useT } from '@/components/shared/LangProvider';
 import { Reveal } from '@/components/shared/Reveal';
 import styles from '@/styles/variants/v3.module.css';
+import { WarpWeftGrid } from './WarpWeftGrid';
 
 export function Hero() {
   const t = useT();
   const h = t.hero;
   return (
     <section id="top" className={styles.hero}>
+      <WarpWeftGrid />
       <Reveal>
         <p className={styles.kicker}>{h.eyebrow}</p>
         <h1 className={styles.heroTitle}>{h.title}</h1>

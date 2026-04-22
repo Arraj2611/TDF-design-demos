@@ -159,6 +159,8 @@
 
 /* ===== Hero ===== */
 .hero {
+  position: relative;
+  overflow: hidden;
   padding: 72px 48px 96px;
   max-width: 1280px;
   margin: 0 auto;
@@ -229,6 +231,7 @@
 
 /* ===== Section shell ===== */
 .section {
+  position: relative;
   padding: 72px 48px;
   max-width: 1280px;
   margin: 0 auto;
@@ -871,17 +874,6 @@
 .footBottomRight {
   display: flex;
   gap: 16px;
-}
-
-/* ===== Drop-cap hook (Task 2 fills) ===== */
-.dropcapParent::first-letter {
-  float: left;
-  font-family: var(--font-playfair);
-  font-weight: 900;
-  font-size: 6rem;
-  line-height: 0.85;
-  padding-right: 8px;
-  color: var(--crimson);
 }
 
 /* ===== Responsive ===== */

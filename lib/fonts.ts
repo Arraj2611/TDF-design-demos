@@ -1,6 +1,6 @@
 import {
   Libre_Caslon_Text, IBM_Plex_Sans, IBM_Plex_Mono, Fraunces, Work_Sans,
-  Noto_Serif_Devanagari, Playfair_Display, Roboto_Slab, Inter,
+  Noto_Serif_Devanagari, Playfair_Display, Roboto_Slab, Inter, Spectral,
 } from 'next/font/google';
 
 export const caslon = Libre_Caslon_Text({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-caslon' });
@@ -27,4 +27,11 @@ export const inter = Inter({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-inter',
+});
+
+export const spectral = Spectral({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-spectral',
 });

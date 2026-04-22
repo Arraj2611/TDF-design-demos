@@ -37,4 +37,26 @@ test.describe('routes', () => {
     const mr = await h1.textContent();
     expect(mr).not.toBe(en);
   });
+
+  test('/v3 Trade Journal renders heading', async ({ page }) => {
+    await page.goto('/v3');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  });
+
+  test('/v4 Corporate Dossier renders Specimen card signature', async ({ page }) => {
+    await page.goto('/v4');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await expect(page.locator('svg').first()).toBeVisible();
+  });
+
+  test('/v5 Heritage Ledger renders heading', async ({ page }) => {
+    await page.goto('/v5');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  });
+
+  test('/v6 Industrial Monograph renders hero loom SVG', async ({ page }) => {
+    await page.goto('/v6');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await expect(page.locator('svg').first()).toBeVisible();
+  });
 });

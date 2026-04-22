@@ -1,23 +1,23 @@
 'use client';
 
 import clsx from 'clsx';
+import dynamic from 'next/dynamic';
 import { useT } from '@/components/shared/LangProvider';
 import { Reveal } from '@/components/shared/Reveal';
 import styles from '@/styles/variants/v1.module.css';
+
+const HeroWeaveCanvas = dynamic(
+  () => import('./HeroWeaveCanvas').then((m) => m.HeroWeaveCanvas),
+  { ssr: false },
+);
 
 export function Hero() {
   const t = useT().hero;
   return (
     <header className={styles.hero} id="top">
-      {/* Task 15 replaces this placeholder with HeroWeaveCanvas */}
-      <div
-        aria-hidden="true"
-        className={styles.heroCanvasPlaceholder}
-        style={{
-          background:
-            'linear-gradient(135deg, #f4ede0 0%, #f4ede0 60%, #a8542b 100%)',
-        }}
-      />
+      <div aria-hidden="true" className={styles.heroCanvasPlaceholder}>
+        <HeroWeaveCanvas />
+      </div>
       <div className={styles.heroGrain} />
       <Reveal className={clsx(styles.container, styles.heroInner)}>
         <div className={styles.heroEyebrow}>

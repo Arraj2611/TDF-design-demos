@@ -1,6 +1,6 @@
 import {
   Libre_Caslon_Text, IBM_Plex_Sans, IBM_Plex_Mono, Fraunces, Work_Sans,
-  Noto_Serif_Devanagari, Playfair_Display, Roboto_Slab,
+  Noto_Serif_Devanagari, Playfair_Display, Roboto_Slab, Inter,
 } from 'next/font/google';
 
 export const caslon = Libre_Caslon_Text({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-caslon' });
@@ -21,4 +21,10 @@ export const slab = Roboto_Slab({
   subsets: ['latin'],
   weight: ['300', '400', '500', '700'],
   variable: '--font-slab',
+});
+
+export const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-inter',
 });

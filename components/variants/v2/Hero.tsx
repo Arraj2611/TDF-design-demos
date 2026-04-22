@@ -1,10 +1,16 @@
 'use client';
 
 import clsx from 'clsx';
+import dynamic from 'next/dynamic';
 import { isValidElement, cloneElement, Fragment, type ReactElement, type ReactNode } from 'react';
 import { useT } from '@/components/shared/LangProvider';
 import { Reveal } from '@/components/shared/Reveal';
 import styles from '@/styles/variants/v2.module.css';
+
+const HeroCardWeave = dynamic(
+  () => import('./HeroCardWeave').then((m) => m.HeroCardWeave),
+  { ssr: false },
+);
 
 function renderTitle(parts: ReactNode) {
   if (!Array.isArray(parts)) return parts;
@@ -41,12 +47,7 @@ export function Hero() {
             </div>
           </Reveal>
           <div className={styles.heroCard}>
-            {/* Task 17 replaces this with <HeroCardWeave /> */}
-            <div
-              aria-hidden="true"
-              className={styles.heroCardPlaceholder}
-              style={{ background: 'linear-gradient(135deg, #2a1e2e 0%, #b9431f 100%)' }}
-            />
+            <HeroCardWeave />
             <div className={styles.heroCardTop}>
               <div className="swatch" />
               <div className="lbl">Solapuri Chaddar · sample no. 014</div>

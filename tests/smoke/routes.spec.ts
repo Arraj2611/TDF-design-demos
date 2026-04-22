@@ -59,4 +59,26 @@ test.describe('routes', () => {
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     await expect(page.locator('svg').first()).toBeVisible();
   });
+
+  test('/v7 Data Monograph renders loom-collapse chart SVG', async ({ page }) => {
+    await page.goto('/v7');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await expect(page.locator('svg').first()).toBeVisible();
+  });
+
+  test('/v8 Export Portfolio renders member tapestry', async ({ page }) => {
+    await page.goto('/v8');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  });
+
+  test('/v9 Swiss Restrained renders heading + binary strip', async ({ page }) => {
+    await page.goto('/v9');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  });
+
+  test('/v10 Minimal Gallery renders hero fabric zoom SVG', async ({ page }) => {
+    await page.goto('/v10');
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    await expect(page.locator('svg').first()).toBeVisible();
+  });
 });

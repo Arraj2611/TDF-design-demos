@@ -267,19 +267,22 @@
 
 .heroGrid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
   gap: 64px;
   align-items: end;
 }
+.heroGrid > * { min-width: 0; }
 
 .heroTitle {
   font-family: var(--font-fraunces), 'Libre Caslon Text', Georgia, serif;
-  font-size: clamp(56px, 8vw, 128px);
-  line-height: 0.95;
-  letter-spacing: -0.035em;
+  font-size: clamp(48px, 7vw, 112px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
   font-weight: 300;
   color: var(--plum);
   font-variation-settings: 'opsz' 144, 'SOFT' 50;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .heroTitle :global(.accent),
 .heroTitle em {
@@ -336,6 +339,8 @@
 /* Chaddar display card in hero */
 .heroCard {
   position: relative;
+  width: 100%;
+  min-width: 320px;
   aspect-ratio: 3 / 4;
   background: var(--plum);
   border: 1px solid var(--line-2);

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useT } from '@/components/shared/LangProvider';
 import styles from '@/styles/variants/v3.module.css';
 
@@ -10,7 +11,9 @@ export function Footer() {
     <footer className={styles.foot}>
       <div className={styles.footTop}>
         <div>
-          <div className={styles.footMark}>TDF</div>
+          <div className={styles.footMark}>
+            <Image src="/assets/tdf-logo-v2.png" alt="TDF" width={48} height={48} />
+          </div>
           <p className={styles.footTag}>{f.tag}</p>
         </div>
         <div>

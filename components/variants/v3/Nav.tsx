@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useT } from '@/components/shared/LangProvider';
 import { BilingualToggle } from '@/components/shared/BilingualToggle';
 import styles from '@/styles/variants/v3.module.css';
@@ -21,7 +22,7 @@ export function Nav() {
     <header className={styles.nav}>
       <div className={styles.navInner}>
         <a href="#top" className={styles.mark} aria-label="TDF home">
-          TDF
+          <Image src="/assets/tdf-logo-v2.png" alt="TDF" width={40} height={40} priority />
         </a>
         <nav aria-label="Primary">
           <ul className={styles.links}>

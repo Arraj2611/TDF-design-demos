@@ -103,12 +103,17 @@
   gap: 32px;
 }
 .mark {
-  font-family: var(--font-playfair);
-  font-weight: 900;
-  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
   color: var(--ink);
   text-decoration: none;
-  letter-spacing: -0.02em;
+  line-height: 0;
+}
+.mark img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 .links {
   display: flex;
@@ -814,10 +819,13 @@
   border-bottom: 1px solid var(--rule);
 }
 .footMark {
-  font-family: var(--font-playfair);
-  font-weight: 900;
-  font-size: 32px;
-  letter-spacing: -0.02em;
+  line-height: 0;
+}
+.footMark img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 .footTag {
   font-size: 14px;

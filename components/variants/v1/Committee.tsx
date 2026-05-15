@@ -24,6 +24,11 @@ export function Committee() {
   const B = BOARD;
   const C = COMMITTEE;
 
+  const people: Member[] =
+    tab === 'board'
+      ? [B.chair, ...(B.vice ?? []), ...(B.directors ?? [])]
+      : [C.chair, ...(C.vice ?? []), ...(C.officers ?? []), ...(C.executive ?? [])];
+
   return (
     <section id="committee" className={styles.committee}>
       <div className={styles.container}>
@@ -60,46 +65,11 @@ export function Committee() {
           </div>
         </div>
 
-        {tab === 'board' && (
-          <div className={styles.org}>
-            <div className={styles.orgRow}>
-              <OrgCard m={B.chair} chief />
-            </div>
-            <div className={styles.orgRow}>
-              {B.vice.map((m, i) => (
-                <OrgCard key={i} m={m} />
-              ))}
-            </div>
-            <div className={clsx(styles.orgRow, styles.wide)}>
-              {B.directors.map((m, i) => (
-                <OrgCard key={i} m={m} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {tab === 'committee' && (
-          <div className={styles.org}>
-            <div className={styles.orgRow}>
-              <OrgCard m={C.chair} chief />
-            </div>
-            <div className={styles.orgRow}>
-              {C.vice.map((m, i) => (
-                <OrgCard key={i} m={m} />
-              ))}
-            </div>
-            <div className={clsx(styles.orgRow, styles.wide)}>
-              {C.officers.map((m, i) => (
-                <OrgCard key={i} m={m} />
-              ))}
-            </div>
-            <div className={clsx(styles.orgRow, styles.wide)}>
-              {C.executive.map((m, i) => (
-                <OrgCard key={i} m={m} />
-              ))}
-            </div>
-          </div>
-        )}
+        <div className={styles.orgFlatGrid}>
+          {people.map((m, i) => (
+            <OrgCard key={i} m={m} chief={i === 0} />
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -14,21 +14,27 @@ const PICK_GLOW_A = '#d9c9a0'; // shuttle trail gradient start
 const PICK_GLOW_B = '#f4ede0'; // shuttle trail gradient end
 
 // Geometry (fractions of canvas, so it scales to any size)
-const WARP_COUNT = 56;
-const ROWS = 22;
-const ROW_GAP_FRAC = 16 / 640; // 16px at 640 design height
+const WARP_COUNT = 80;
+const ROWS = 30;
+const ROW_GAP_FRAC = 14 / 640; // 14px at 640 design height — tighter pitch
 const FELL_Y_FRAC = 0.38; // shuttle line at ~38% of height
 const WOVEN_BG_OPACITY = 0.35;
-const CYCLE_MS = 2400; // 2.4s per pick, matches bundle
+const CYCLE_MS = 2000; // 2.0s per pick — snappier
 
-// Pre-classify warp colors by index so we don't recompute each frame.
+// Pre-classify warp colors: multiple stripe zones like a real chaddar
 function classifyWarp(i: number): { color: string; width: number; alpha: number } {
-  const stripe1 = Math.abs(i - WARP_COUNT * 0.18) < 1.5;
-  const stripe2 = Math.abs(i - WARP_COUNT * 0.2) < 0.5;
-  const stripe3 = Math.abs(i - WARP_COUNT * 0.82) < 1.5;
-  const stripe4 = Math.abs(i - WARP_COUNT * 0.8) < 0.5;
-  if (stripe2 || stripe4) return { color: RUST, width: 1.6, alpha: 0.85 };
-  if (stripe1 || stripe3) return { color: GOLD, width: 1.6, alpha: 0.85 };
+  const p = i / WARP_COUNT;
+  // Left border band
+  if (Math.abs(p - 0.05) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
+  if (Math.abs(p - 0.07) < 0.015) return { color: GOLD, width: 1.6, alpha: 0.85 };
+  if (Math.abs(p - 0.10) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
+  // Right border band
+  if (Math.abs(p - 0.90) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
+  if (Math.abs(p - 0.93) < 0.015) return { color: GOLD, width: 1.6, alpha: 0.85 };
+  if (Math.abs(p - 0.95) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
+  // Inner accent stripes
+  if (Math.abs(p - 0.25) < 0.008) return { color: GOLD, width: 1.6, alpha: 0.85 };
+  if (Math.abs(p - 0.75) < 0.008) return { color: GOLD, width: 1.6, alpha: 0.85 };
   return { color: PAPER, width: 1.1, alpha: 0.55 };
 }
 
@@ -107,18 +113,24 @@ export function HeroWeaveCanvas() {
         }
         ctx.globalAlpha = 1;
 
-        // Chaddar supplementary weft: rust every 4 rows, gold every 4 rows offset by 2.
-        if (r % 4 === 0) {
+        // Chaddar supplementary weft: richer 3-cycle border pattern
+        if (r % 3 === 0) {
           ctx.fillStyle = RUST;
-          ctx.globalAlpha = 0.7;
-          ctx.fillRect(warpGap * 2, y - 2, warpGap * 3, 3);
-          ctx.fillRect(w - warpGap * 5, y - 2, warpGap * 3, 3);
+          ctx.globalAlpha = 0.8;
+          ctx.fillRect(0, y - 2, warpGap * 6, 4);
+          ctx.fillRect(w - warpGap * 6, y - 2, warpGap * 6, 4);
           ctx.globalAlpha = 1;
-        } else if (r % 4 === 2) {
+        } else if (r % 3 === 1) {
           ctx.fillStyle = GOLD;
-          ctx.globalAlpha = 0.55;
-          ctx.fillRect(warpGap * 2, y - 2, warpGap * 3, 3);
-          ctx.fillRect(w - warpGap * 5, y - 2, warpGap * 3, 3);
+          ctx.globalAlpha = 0.65;
+          ctx.fillRect(warpGap, y - 2, warpGap * 4, 3);
+          ctx.fillRect(w - warpGap * 5, y - 2, warpGap * 4, 3);
+          ctx.globalAlpha = 1;
+        } else if (r % 6 === 2) {
+          ctx.fillStyle = GOLD;
+          ctx.globalAlpha = 0.5;
+          ctx.fillRect(warpGap * 19, y - 1, warpGap * 2, 2);
+          ctx.fillRect(w - warpGap * 21, y - 1, warpGap * 2, 2);
           ctx.globalAlpha = 1;
         }
       }
@@ -250,6 +262,7 @@ export function HeroWeaveCanvas() {
         display: 'block',
         position: 'absolute',
         inset: 0,
+        transform: 'scaleY(-1)',
       }}
     />
   );

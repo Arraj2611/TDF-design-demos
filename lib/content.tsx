@@ -252,7 +252,6 @@ const en: Content = {
     sub: "A member-driven association of power loom owners, mill operators, and textile entrepreneurs. Founded to modernise, advocate for, and globally position the city once known as Girangaon — the Mill Town of the Deccan.",
     stats: [
       { n: '1995', l: 'Founded by young Solapur industrialists' },
-      { n: '15,000+', l: 'Power looms active in the city today' },
       { n: '240+', l: 'Member units across spinning, weaving, processing' },
       { n: '2019', l: 'First international expo held in Solapur' },
     ],
@@ -650,7 +649,6 @@ const mr: Content = {
     sub: 'पॉवरलूम मालक, गिरणी चालक आणि वस्त्रोद्योग उद्योजकांची सदस्य-चालित संघटना. गिरणगाव म्हणून ओळखल्या जाणाऱ्या या शहराचे आधुनिकीकरण, हक्कांसाठी आवाज, आणि जागतिक ओळख निर्माण करण्यासाठी स्थापन.',
     stats: [
       { n: '१९९५', l: 'सोलापूरच्या युवा उद्योजकांकडून स्थापन' },
-      { n: '१५,०००+', l: 'शहरात सध्या कार्यरत पॉवरलूम' },
       { n: '२४०+', l: 'कताई, विणकाम, प्रक्रिया क्षेत्रातील सदस्य' },
       { n: '२०१९', l: 'सोलापुरात पहिले आंतरराष्ट्रीय एक्स्पो' },
     ],

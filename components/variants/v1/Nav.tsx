@@ -13,8 +13,8 @@ const LINKS = [
   { id: 'members', key: 'members' },
   { id: 'committee', key: 'board' },
   { id: 'facilities', key: 'facilities' },
-  { id: 'news', key: 'news' },
   { id: 'events', key: 'events' },
+  { id: 'news', key: 'news' },
   { id: 'solapur', key: 'solapur' },
   { id: 'contact', key: 'contact' },
 ] as const;

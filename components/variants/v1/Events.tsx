@@ -10,6 +10,11 @@ export function Events() {
   const t = useT().events;
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const list = tab === 'upcoming' ? t.upcoming : t.past;
+  const isPast = tab === 'past';
+
+  // First upcoming event gets the featured card treatment
+  const featured = !isPast ? list.find((ev) => ev.featured) ?? list[0] : null;
+  const rest = featured ? list.filter((ev) => ev !== featured) : list;
 
   return (
     <section id="events" className={styles.events}>
@@ -46,35 +51,52 @@ export function Events() {
           </div>
         </div>
 
-        <div className={styles.eventsList}>
-          {list.map((ev, i) => (
-            <div
-              key={i}
-              className={clsx(
-                styles.event,
-                ev.featured && styles.featured,
-                tab === 'past' && styles.isPast
-              )}
-            >
-              <div className={styles.eventDate}>
-                <div className={clsx('d', 'serif')}>{ev.d}</div>
-                <span className="m">{ev.m}</span>
-              </div>
-              <div className={styles.eventType}>— {ev.type}</div>
-              <div className={clsx(styles.eventTitle, 'serif')}>
-                {ev.title}
-                <span className="sub">{ev.sub}</span>
-              </div>
-              <div className={styles.eventVenue}>
-                <span className="label">— {tab === 'past' ? 'Held at' : 'Venue'}</span>
-                {ev.venue.split('\n').map((l, j) => (
+        {/* Featured event card — upcoming only */}
+        {featured && (
+          <div className={styles.eventFeatCard}>
+            <div className={styles.efcDate}>
+              <div className={clsx(styles.efcD, 'serif')}>{featured.d}</div>
+              <div className={styles.efcM}>{featured.m}</div>
+              <div className={styles.efcType}>— {featured.type}</div>
+            </div>
+            <div className={styles.efcBody}>
+              <h3 className={clsx(styles.efcTitle, 'serif')}>
+                {featured.title}
+                {featured.sub && <span className={styles.efcSub}>{featured.sub}</span>}
+              </h3>
+              <div className={styles.efcVenue}>
+                <span className={styles.efcVenueLabel}>Venue —</span>
+                {featured.venue.split('\n').map((l, j) => (
                   <div key={j}>{l}</div>
                 ))}
               </div>
-              <div className={styles.eventCta}>{ev.cta}</div>
+              <div className={styles.efcCta}>{featured.cta} →</div>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Remaining / past events — compact cards */}
+        {rest.length > 0 && (
+          <div className={styles.eventCompactCards}>
+            {rest.map((ev, i) => (
+              <div key={i} className={clsx(styles.eventCompact, isPast && styles.isPast)}>
+                <div className={styles.ecDate}>
+                  <div className={clsx(styles.ecD, 'serif')}>{ev.d}</div>
+                  <div className={styles.ecM}>{ev.m}</div>
+                </div>
+                <div className={styles.ecBody}>
+                  <div className={styles.ecType}>— {ev.type}</div>
+                  <div className={clsx(styles.ecTitle, 'serif')}>{ev.title}</div>
+                  <div className={styles.ecVenue}>
+                    <span>{isPast ? 'Held at' : 'Venue'} —</span>{' '}
+                    {ev.venue.split('\n')[0]}
+                  </div>
+                  <div className={styles.ecCta}>{ev.cta}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

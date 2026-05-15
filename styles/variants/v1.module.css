@@ -1708,4 +1708,270 @@
     right: 24px;
     bottom: 24px;
   }
+  /* Flat org grid responsive */
+  .orgFlatGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Event cards responsive */
+  .eventFeatCard {
+    grid-template-columns: 1fr !important;
+  }
+  .eventCompactCards {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ===== Timeline stagger animation ===== */
+@keyframes timelineIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.tlItem {
+  animation: timelineIn 0.5s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tlItem { animation: none; }
+}
+
+/* ===== Committee flat grid ===== */
+.orgFlatGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-left: 1px solid var(--line-2);
+  border-top: 1px solid var(--line-2);
+  margin-top: 32px;
+}
+.orgFlatGrid .orgCard {
+  width: auto;
+  border-left: 0;
+  border-top: 0;
+  border-right: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+  padding: 20px;
+}
+.orgFlatGrid .orgCard:global(.chief) {
+  grid-column: span 2;
+  background: var(--navy);
+  color: var(--cream);
+  border-color: var(--navy);
+}
+
+/* ===== News carousel dots ===== */
+.newsDots {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 0 0;
+}
+.newsDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(244, 237, 224, 0.25);
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+.newsDot:global(.active),
+.newsDot.active {
+  background: var(--gold);
+}
+
+/* ===== Events V2 — featured card ===== */
+.eventFeatCard {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  background: var(--navy);
+  color: var(--cream);
+  margin-top: 32px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.eventFeatCard:hover {
+  background: var(--navy-2);
+}
+.efcDate {
+  padding: 32px 24px;
+  border-right: 1px solid rgba(244, 237, 224, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.efcD {
+  font-family: var(--font-caslon), Georgia, serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--cream);
+}
+.efcM {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 8px;
+}
+.efcType {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 237, 224, 0.6);
+  margin-top: 12px;
+}
+.efcBody {
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.efcTitle {
+  font-family: var(--font-caslon), Georgia, serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+}
+.efcSub {
+  display: block;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(244, 237, 224, 0.75);
+  margin-top: 6px;
+}
+.efcVenue {
+  font-size: 13px;
+  color: rgba(244, 237, 224, 0.7);
+  line-height: 1.5;
+}
+.efcVenueLabel {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+  opacity: 0.6;
+}
+.efcCta {
+  margin-top: auto;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* ===== Events V2 — compact cards ===== */
+.eventCompactCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+}
+.eventCompact {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 20px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding-right: 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.eventCompact:hover {
+  background: var(--cream-2);
+}
+.eventCompact:nth-child(even) {
+  border-right: 0;
+  padding-right: 0;
+  padding-left: 24px;
+}
+.eventCompact.isPast {
+  opacity: 0.72;
+}
+.ecDate {
+  font-family: var(--font-caslon), Georgia, serif;
+  line-height: 1.1;
+  text-align: right;
+  padding-right: 16px;
+  border-right: 1px solid var(--line-2);
+}
+.ecD {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+.ecM {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-top: 4px;
+  display: block;
+}
+.ecBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ecType {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+.ecTitle {
+  font-family: var(--font-caslon), Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--navy);
+}
+.ecVenue {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.ecCta {
+  margin-top: 4px;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+/* ===== Footer social icons ===== */
+.footSocials {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.footSocialIcon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(244, 237, 224, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(244, 237, 224, 0.7);
+  transition: border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.footSocialIcon:hover {
+  border-color: var(--gold);
+  color: var(--gold);
 }

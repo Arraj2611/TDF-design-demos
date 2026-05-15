@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { useT } from '@/components/shared/LangProvider';
 import { Reveal } from '@/components/shared/Reveal';
@@ -7,6 +8,23 @@ import styles from '@/styles/variants/v1.module.css';
 
 export function News() {
   const t = useT().news;
+  const [activeSmall, setActiveSmall] = useState(0);
+  const [smallFade, setSmallFade] = useState(false);
+
+  useEffect(() => {
+    if (t.small.length <= 1) return;
+    const interval = setInterval(() => {
+      setSmallFade(true);
+      setTimeout(() => {
+        setActiveSmall((prev) => (prev + 1) % t.small.length);
+        setSmallFade(false);
+      }, 350);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [t.small.length]);
+
+  const small = t.small[activeSmall];
+
   return (
     <section id="news" className={styles.news}>
       <div className={styles.container}>
@@ -22,6 +40,7 @@ export function News() {
         </Reveal>
 
         <div className={styles.newsGrid}>
+          {/* Featured — always visible, never rotates */}
           <article className={clsx(styles.newsItem, styles.feature)}>
             <div className={styles.newsImage}>
               <span className="tag">{t.feature.tag}</span>
@@ -38,21 +57,43 @@ export function News() {
             </div>
           </article>
 
-          {t.small.map((s, i) => (
-            <article className={styles.newsItem} key={i}>
+          {/* Rotating small article */}
+          {small && (
+            <article
+              className={styles.newsItem}
+              style={{ opacity: smallFade ? 0 : 1, transition: 'opacity 0.35s ease' }}
+            >
               <div className={styles.newsImage}>
-                <span className="ph">◦ {s.ph}</span>
+                <span className="ph">◦ {small.ph}</span>
               </div>
               <div className={styles.newsMeta}>
-                <span className="cat">{s.cat}</span>
+                <span className="cat">{small.cat}</span>
               </div>
-              <h3 className={styles.newsTitle}>{s.title}</h3>
+              <h3 className={styles.newsTitle}>{small.title}</h3>
               <div className={styles.newsArrow}>
                 Continue <span>→</span>
               </div>
             </article>
-          ))}
+          )}
         </div>
+
+        {/* Dot indicators for rotating small articles */}
+        {t.small.length > 1 && (
+          <div className={styles.newsDots}>
+            {t.small.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Article ${i + 1}`}
+                className={clsx(styles.newsDot, i === activeSmall && styles.active)}
+                onClick={() => {
+                  setSmallFade(true);
+                  setTimeout(() => { setActiveSmall(i); setSmallFade(false); }, 350);
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <div className={styles.newsSecondary}>
           {t.secondary.map((n, i) => (

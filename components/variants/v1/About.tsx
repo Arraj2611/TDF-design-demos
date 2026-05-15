@@ -47,7 +47,11 @@ export function About() {
           </div>
           <div className={styles.timelineScroll}>
             {t.timeline.map((it, i) => (
-              <div key={i} className={clsx(styles.tlItem, it.a && styles.accent)}>
+              <div
+                key={i}
+                className={clsx(styles.tlItem, it.a && styles.accent)}
+                style={{ animationDelay: `${i * 0.05}s` }}
+              >
                 <div className={styles.tlYear}>{it.y}</div>
                 <div className={styles.tlTitle}>— {it.c}</div>
                 <div className={styles.tlText}>{it.t}</div>

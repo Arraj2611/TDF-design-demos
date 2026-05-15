@@ -21,8 +21,8 @@ export function V1Page() {
         <Members />
         <Committee />
         <Facilities />
-        <News />
         <Events />
+        <News />
         <Solapur />
         <Contact />
       </main>

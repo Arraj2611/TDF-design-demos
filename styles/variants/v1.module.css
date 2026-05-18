@@ -85,17 +85,19 @@
 
 /* ===== Nav ===== */
 .nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
-  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.3s ease, backdrop-filter 0.3s ease;
 }
 .navScrolled {
-  background: rgba(244, 237, 224, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 2px 24px rgba(15, 35, 64, 0.10), 0 1px 0 rgba(15, 35, 64, 0.06);
   border-bottom-color: transparent;
 }
@@ -309,7 +311,7 @@
 
 /* ===== Section bones ===== */
 .root section {
-  scroll-margin-top: 80px;
+  scroll-margin-top: 96px;
 }
 
 .secHead {

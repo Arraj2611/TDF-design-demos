@@ -1662,6 +1662,22 @@
   .navLinks {
     display: none;
   }
+  /* Show hamburger, tighten right side */
+  .navBurger {
+    display: flex;
+  }
+  .navRight {
+    gap: 4px;
+  }
+  /* Upgrade touch targets */
+  .chip {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+  .footSocialIcon {
+    width: 40px;
+    height: 40px;
+  }
   .membersMeta {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1783,7 +1799,15 @@
   border: 0;
   cursor: pointer;
   padding: 0;
+  position: relative;
+  flex-shrink: 0;
   transition: background 0.2s;
+}
+/* Phantom 44×44 touch target (WCAG 2.5.5) without changing visual size */
+.newsDot::before {
+  content: '';
+  position: absolute;
+  inset: -18px;
 }
 .newsDot:global(.active),
 .newsDot.active {
@@ -1965,6 +1989,119 @@
   color: var(--navy);
 }
 
+/* ===== Hamburger button ===== */
+.navBurger {
+  display: none; /* shown via @media (max-width: 960px) */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+.navBurgerBar {
+  width: 22px;
+  height: 1.5px;
+  background: var(--ink);
+  display: block;
+  transform-origin: center;
+  transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease,
+              transform 0.26s ease;
+}
+.navBurgerOpen > span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+.navBurgerOpen > span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.navBurgerOpen > span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+/* ===== Mobile full-screen drawer ===== */
+.mobileDrawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--cream);
+  z-index: 49;
+  display: flex;
+  flex-direction: column;
+  padding: 100px 32px 0;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mobileDrawerOpen {
+  transform: translateX(0);
+}
+.mobileNavLinks {
+  display: flex;
+  flex-direction: column;
+}
+.mobileNavLink {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line);
+  padding: 0 8px;
+  transition: color 0.15s, padding-left 0.15s;
+}
+.mobileNavLink:hover,
+.mobileNavLinkActive {
+  color: var(--navy);
+  padding-left: 20px;
+}
+.mobileNavJoin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  margin-top: 28px;
+  background: var(--navy);
+  color: var(--cream) !important;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  transition: background 0.15s;
+}
+.mobileNavJoin:hover {
+  background: var(--rust);
+}
+.mobileNavBottom {
+  margin-top: 24px;
+  padding: 24px 8px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-start;
+}
+.mobileBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  z-index: 48;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
 /* ===== Footer social icons ===== */
 .footSocials {
   display: flex;
@@ -1985,4 +2122,68 @@
 .footSocialIcon:hover {
   border-color: var(--gold);
   color: var(--gold);
+}
+
+/* ===== Small phone (≤ 480px) ===== */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+  /* Hide subtitle in logo — too cramped at 375px */
+  .logoTextL2 {
+    display: none;
+  }
+  /* Tighter section heads */
+  .secHead {
+    padding-top: 56px;
+  }
+  /* Hero vertical padding */
+  .heroInner {
+    padding: 80px 0 72px;
+  }
+  /* Member wall: 2-col instead of 3 */
+  .logoWall {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Committee flat grid: single column */
+  .orgFlatGrid {
+    grid-template-columns: 1fr !important;
+  }
+  .orgFlatGrid .orgCard:global(.chief) {
+    grid-column: 1 !important;
+  }
+  /* Solapur facts: single column */
+  .solapurFacts {
+    grid-template-columns: 1fr;
+  }
+  /* Footer: full stack */
+  .footTop {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .footBottom {
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .footBottom :global(.right) {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  /* Mobile drawer padding tighter on small phones */
+  .mobileDrawer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  /* Featured event card: tighten body padding */
+  .efcBody {
+    padding: 24px 20px;
+  }
+  .efcDate {
+    padding: 24px 16px;
+  }
+  /* Reduce large serif date number on event card */
+  .efcD {
+    font-size: 52px;
+  }
 }

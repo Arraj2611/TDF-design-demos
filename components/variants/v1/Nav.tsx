@@ -22,10 +22,12 @@ const LINKS = [
 export function Nav() {
   const t = useT();
   const [active, setActive] = useState<string>('about');
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const ids = LINKS.map((l) => l.id);
-    const spy = () => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
       let current = ids[0] ?? 'about';
       for (const id of ids) {
         const el = document.getElementById(id);
@@ -33,13 +35,13 @@ export function Nav() {
       }
       setActive(current);
     };
-    spy();
-    window.addEventListener('scroll', spy, { passive: true });
-    return () => window.removeEventListener('scroll', spy);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    <header className={styles.nav}>
+    <header className={clsx(styles.nav, scrolled && styles.navScrolled)}>
       <div className={clsx(styles.container, styles.navInner)}>
         <a href="#top" className={styles.logo} aria-label="TDF home">
           <span className={styles.logoMark}>

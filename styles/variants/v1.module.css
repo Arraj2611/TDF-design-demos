@@ -90,7 +90,14 @@
   z-index: 50;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.navScrolled {
+  background: rgba(244, 237, 224, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 24px rgba(15, 35, 64, 0.10), 0 1px 0 rgba(15, 35, 64, 0.06);
+  border-bottom-color: transparent;
 }
 .navInner {
   display: flex;

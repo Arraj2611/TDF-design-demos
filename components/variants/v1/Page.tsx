@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import styles from '@/styles/variants/v1.module.css';
 import { Nav } from './Nav';
 import { Hero } from './Hero';
@@ -11,9 +12,9 @@ import { Solapur } from './Solapur';
 import { Contact } from './Contact';
 import { Footer } from './Footer';
 
-export function V1Page() {
+export function V1Page({ theme }: { theme?: CSSProperties }) {
   return (
-    <div className={styles.root}>
+    <div className={styles.root} style={theme}>
       <Nav />
       <main>
         <Hero />

@@ -10,8 +10,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'TDF Solapur — Design Directions',
-  description: 'Ten design directions for the Textile Development Foundation, Solapur.',
+  title: 'Textile Development Foundation — Solapur',
+  description:
+    'The Association of Textile Manufacturers, Solapur. Representing 240 member units across Terry Towels, Chaddars, Spinning, Processing & Dyeing, and Exports.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

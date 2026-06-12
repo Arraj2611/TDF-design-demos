@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { LangProvider } from '@/components/shared/LangProvider';
-import { VariantSwitcher } from '@/components/shared/VariantSwitcher';
 import { caslon, plexSans, plexMono, fraunces, workSans, devanagari, playfair, slab, inter, spectral, plexSerif } from '@/lib/fonts';
 import './globals.css';
 
@@ -24,7 +23,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <LangProvider>
           {children}
-          <VariantSwitcher />
         </LangProvider>
       </body>
     </html>

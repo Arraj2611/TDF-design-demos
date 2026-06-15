@@ -3,42 +3,137 @@
 import { useEffect, useRef } from 'react';
 import { usePrefersReducedMotion } from '@/lib/useReducedMotion';
 
-// V1 palette — mirrors the bundle WovenBackdrop
-const PAPER = '#f4ede0'; // warp cream
-const INK = '#0f2340'; // navy ink
-const CLOTH = '#1a2d4d'; // woven-region navy
-const RUST = '#c36a3f'; // chaddar rust stripe
-const GOLD = '#b58a3c'; // chaddar secondary (gold-ochre)
-const WEFT_SHADE = '#e8dcc0'; // every 3rd row
-const PICK_GLOW_A = '#d9c9a0'; // shuttle trail gradient start
-const PICK_GLOW_B = '#f4ede0'; // shuttle trail gradient end
+/* ============================================================================
+   Hero loom — an upside-down handloom weaving a Solapur chaddar in real time.
+   The cloth climbs the screen while the loom works at the base: warp threads
+   open into a shed, a shuttle flies the weft across, the reed beats it into the
+   fell, and the finished pick joins the cloth. The jacquard draft carries the
+   TDF flower (four petals around a plus) and a woven "TDF" border band.
+   Pure 2D canvas — no dependencies, GPU-light, honours reduced-motion.
+   ========================================================================== */
 
-// Geometry (fractions of canvas, so it scales to any size)
-const WARP_COUNT = 80;
-const ROWS = 30;
-const ROW_GAP_FRAC = 14 / 640; // 14px at 640 design height — tighter pitch
-const FELL_Y_FRAC = 0.38; // shuttle line at ~38% of height
-const WOVEN_BG_OPACITY = 0.35;
-const CYCLE_MS = 2000; // 2.0s per pick — snappier
+// V1 palette — the institutional navy edition.
+const THEME = {
+  bg: '#0c1c38',
+  warp: '#d9c9a0',
+  warpDim: '#6f6a55',
+  ground: '#16294a', // finished-cloth navy
+  motifA: '#f4ede0', // cream
+  motifB: '#c36a3f', // rust accent
+  lattice: '#b58a3c', // gold trellis
+  gold: '#b58a3c', // flower plus
+  letter: '#11203c', // woven "TDF" ink
+  solid1: '#c36a3f',
+  solid2: '#b58a3c',
+  glow: '#d9c9a0',
+  shadow: '6,14,30',
+} as const;
 
-// Pre-classify warp colors: multiple stripe zones like a real chaddar
-function classifyWarp(i: number): { color: string; width: number; alpha: number } {
-  const p = i / WARP_COUNT;
-  // Left border band
-  if (Math.abs(p - 0.05) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
-  if (Math.abs(p - 0.07) < 0.015) return { color: GOLD, width: 1.6, alpha: 0.85 };
-  if (Math.abs(p - 0.10) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
-  // Right border band
-  if (Math.abs(p - 0.90) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
-  if (Math.abs(p - 0.93) < 0.015) return { color: GOLD, width: 1.6, alpha: 0.85 };
-  if (Math.abs(p - 0.95) < 0.01) return { color: RUST, width: 1.6, alpha: 0.85 };
-  // Inner accent stripes
-  if (Math.abs(p - 0.25) < 0.008) return { color: GOLD, width: 1.6, alpha: 0.85 };
-  if (Math.abs(p - 0.75) < 0.008) return { color: GOLD, width: 1.6, alpha: 0.85 };
-  return { color: PAPER, width: 1.1, alpha: 0.55 };
+const P = 18; // diamond lattice period, in warp ends
+const BODY = 150; // body picks per chaddar piece
+const ROW_H = 6; // px per woven pick
+const TDF_W = 11; // glyph-band width in ends
+
+// Flower geometry — module-level so the per-cell hot path never reallocates.
+const FL_ARM = 3.5; // plus arm half-length
+const FL_W = 1.05; // plus arm half-width
+const FL_PD = 3.8; // petal centre distance
+const FL_PR2 = 2.35 * 2.35; // petal radius²
+
+// TDF logo flower medallion, evaluated per cell.
+// 'P' petal · 'C' plus · 'D' heart-dot · null ground.
+function flower(x: number, y: number): 'P' | 'C' | 'D' | null {
+  if (x * x + y * y <= 1.7) return 'D';
+  if ((Math.abs(y) <= FL_W && Math.abs(x) <= FL_ARM) || (Math.abs(x) <= FL_W && Math.abs(y) <= FL_ARM)) return 'C';
+  if (x * x + (y + FL_PD) * (y + FL_PD) <= FL_PR2) return 'P';
+  if (x * x + (y - FL_PD) * (y - FL_PD) <= FL_PR2) return 'P';
+  if ((x + FL_PD) * (x + FL_PD) + y * y <= FL_PR2) return 'P';
+  if ((x - FL_PD) * (x - FL_PD) + y * y <= FL_PR2) return 'P';
+  return null;
 }
 
-const WARPS = Array.from({ length: WARP_COUNT }, (_, i) => classifyWarp(i));
+// "TDF" — 3x5 glyphs across 11 ends.
+const TDF = [
+  '###.##..###',
+  '.#..#.#.#..',
+  '.#..#.#.##.',
+  '.#..#.#.#..',
+  '.#..##..#..',
+];
+
+type Band = { type: string; i: number; n: number };
+
+// One border, mirrored around the unwoven gap between two chaddar pieces.
+const BORDER: Band[] = (() => {
+  const half: Band[] = (
+    [
+      ['solid2', 2], ['ground', 2], ['dots', 3], ['ground', 2], ['kungri', 8],
+      ['ground', 1], ['tdf', 7], ['ground', 1], ['solid1', 4], ['solid2', 2], ['ground', 2],
+    ] as [string, number][]
+  ).flatMap(([type, n]) => Array.from({ length: n }, (_, i) => ({ type, i, n })));
+  const gap: Band[] = Array.from({ length: 8 }, (_, i) => ({ type: 'gap', i, n: 8 }));
+  return [...half, ...gap, ...[...half].reverse()];
+})();
+const REPEAT = BODY + BORDER.length;
+
+const mod = (a: number, n: number) => ((a % n) + n) % n;
+
+function bodyColor(grow: number, col: number): string {
+  const u = col + grow;
+  const v = col - grow;
+  const um = mod(u, P);
+  const vm = mod(v, P);
+  if ((um === 0 || vm === 0) && (col & 1) === 0) return THEME.lattice; // dotted trellis
+  const du = um - P / 2;
+  const dv = vm - P / 2;
+  const f = flower((du + dv) / 2, (du - dv) / 2);
+  if (f === 'C') return THEME.gold;
+  if (f === 'D') return THEME.motifB;
+  if (f === 'P') {
+    const alt = (Math.floor(u / P) + Math.floor(v / P)) & 1;
+    return alt ? THEME.motifB : THEME.motifA;
+  }
+  return THEME.ground;
+}
+
+function borderColor(spec: Band, col: number): string {
+  switch (spec.type) {
+    case 'solid1':
+      return THEME.solid1;
+    case 'solid2':
+      return THEME.solid2;
+    case 'dots': {
+      const w = spec.i === 1 ? 3 : 1;
+      return Math.abs(mod(col, 7) - 3) < w ? THEME.motifA : THEME.ground;
+    }
+    case 'kungri': {
+      const h = (spec.n - spec.i) * 0.75; // temple-spire teeth
+      return Math.abs(mod(col, 13) - 6.5) < h ? THEME.ground : THEME.motifA;
+    }
+    case 'tdf': {
+      if (spec.i === 0 || spec.i === spec.n - 1) return THEME.motifA; // pad rows
+      // Glyph rows are emitted bottom-up on purpose: drawFrame() renders the whole
+      // scene vertically flipped (ctx.scale(1,-1)) so the loom weaves upward, which
+      // would otherwise invert the lettering. Keep this in sync with that transform.
+      const r = spec.n - 2 - spec.i; // 1..5 → 4..0; never out of range given the pad guard
+      const lx = mod(col + 4, 18);
+      return lx < TDF_W && TDF[r]![lx] === '#' ? THEME.letter : THEME.motifA;
+    }
+    default:
+      return THEME.ground;
+  }
+}
+
+function pattern(grow: number, col: number, count: number): string | null {
+  const m = mod(grow, REPEAT);
+  const spec = m >= BODY ? BORDER[m - BODY] : null;
+  if (spec && spec.type === 'gap') return null;
+  if (col < 2 || col >= count - 2) return THEME.solid1; // selvedge
+  return spec ? borderColor(spec, col) : bodyColor(grow, col);
+}
+
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function HeroWeaveCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -49,205 +144,319 @@ export function HeroWeaveCanvas() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const cloth = document.createElement('canvas');
+    const cctx = cloth.getContext('2d');
+    if (!cctx) return;
 
-    const DPR = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    const DPR = window.devicePixelRatio || 1;
+    const CYCLE_MS = 1100; // one pick
+
+    let W = 0;
+    let H = 0;
+    let COUNT = 0;
+    let WPX = 0;
+    let FELL = 0;
+    let HEDDLE = 0;
+    let CLOTH_H = 0;
+    let midCol = 0; // centre end — sampled for the in-flight weft colour
+    let warpJitter = new Float32Array(0); // per-end brightness noise, fixed per resize
+
+    let grow = 0;
+    let clock = 0;
+    let dirRight = true;
+    let shed = 1;
+    let committed = false;
+    let lastTime = 0;
+
+    const hash = (x: number, y: number) => {
+      let h = (x * 73856093) ^ (y * 19349663);
+      h = (h ^ (h >>> 13)) * 1274126177;
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+    };
+
+    // Paint one woven pick into the cloth buffer at the given y (CSS px).
+    const paintRow = (g: number, y: number) => {
+      for (let col = 0; col < COUNT; col++) {
+        const c = pattern(g, col, COUNT);
+        const x = col * WPX;
+        if (c === null) {
+          const edge = BORDER[mod(g, REPEAT) - BODY]; // unwoven gap → fringe at the piece edge
+          if (edge && edge.i < 2 && hash(col, g) > 0.45) {
+            cctx.strokeStyle = THEME.warpDim;
+            cctx.globalAlpha = 0.7 - edge.i * 0.25;
+            cctx.lineWidth = 1;
+            cctx.beginPath();
+            cctx.moveTo(x + WPX / 2, y);
+            cctx.lineTo(x + WPX / 2 + (hash(col, g + 1) - 0.5) * 3, y + ROW_H);
+            cctx.stroke();
+            cctx.globalAlpha = 1;
+          }
+          continue;
+        }
+        cctx.fillStyle = c;
+        cctx.fillRect(x, y, WPX + 0.5, ROW_H);
+        cctx.fillStyle = '#fff'; // thread roundness — top highlight
+        cctx.globalAlpha = 0.1 + hash(col, g) * 0.08;
+        cctx.fillRect(x, y + 0.4, WPX, 1.3);
+        cctx.fillStyle = '#000'; // bottom shade
+        cctx.globalAlpha = 0.16;
+        cctx.fillRect(x, y + ROW_H - 1.2, WPX, 1.2);
+        if ((col + g) & 1) {
+          cctx.globalAlpha = 0.07; // interlace shimmer
+          cctx.fillRect(x, y, WPX, ROW_H);
+        }
+        cctx.globalAlpha = 1;
+      }
+    };
+
+    const commitRow = () => {
+      cctx.drawImage(cloth, 0, 0, cloth.width, cloth.height, 0, ROW_H, W, CLOTH_H);
+      cctx.clearRect(0, 0, W, ROW_H);
+      paintRow(grow, 0);
+      grow++;
+    };
+
+    const prefill = () => {
+      cctx.clearRect(0, 0, W, CLOTH_H);
+      const n = Math.ceil(CLOTH_H / ROW_H) + 2;
+      const start = REPEAT * 3 + BODY - Math.floor(n * 0.62);
+      for (let i = 0; i < n; i++) paintRow(start + i, (n - 1 - i) * ROW_H);
+      grow = start + n;
+    };
+
+    // Static gradients — rebuilt on resize, reused every frame.
+    let warpFade: CanvasGradient;
+    let depthShadow: CanvasGradient;
+    let vignette: CanvasGradient;
+    const buildGradients = () => {
+      warpFade = ctx.createLinearGradient(0, 0, 0, FELL);
+      warpFade.addColorStop(0, 'rgba(0,0,0,0.55)');
+      warpFade.addColorStop(1, 'rgba(0,0,0,0)');
+      depthShadow = ctx.createLinearGradient(0, FELL, 0, H);
+      depthShadow.addColorStop(0, `rgba(${THEME.shadow},0)`);
+      depthShadow.addColorStop(1, `rgba(${THEME.shadow},0.62)`);
+      vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.95);
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.4)');
+    };
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.round(rect.width * DPR));
-      canvas.height = Math.max(1, Math.round(rect.height * DPR));
+      W = Math.max(1, rect.width);
+      H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      COUNT = Math.max(90, Math.min(190, Math.round(W / 7)));
+      WPX = W / COUNT;
+      FELL = H * 0.34;
+      HEDDLE = FELL * 0.55;
+      CLOTH_H = H - FELL + ROW_H * 2;
+      midCol = Math.floor(COUNT / 2);
+      warpJitter = new Float32Array(COUNT);
+      for (let i = 0; i < COUNT; i++) warpJitter[i] = hash(i, 7);
+      cloth.width = Math.round(W * DPR);
+      cloth.height = Math.round(CLOTH_H * DPR);
+      cctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildGradients();
+      prefill();
     };
 
-    // Draws the whole weave scene at normalized time t in [0, 1].
-    // t cycles every CYCLE_MS: 0 = shuttle starts at left, 0.5 = right edge, 1 = back to left.
-    const drawFrame = (t: number) => {
-      const rect = canvas.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
-      ctx.clearRect(0, 0, w, h);
+    const drawFrame = (now: number, t: number) => {
+      const FLY_END = 0.7;
+      const BEAT_END = 0.82;
 
-      const warpGap = w / WARP_COUNT;
-      const rowGap = Math.max(10, h * ROW_GAP_FRAC);
-      const fellY = h * FELL_Y_FRAC;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = THEME.bg;
+      ctx.fillRect(0, 0, W, H);
 
-      // 1) Warp threads (vertical, always visible)
-      for (let i = 0; i < WARPS.length; i++) {
-        const warp = WARPS[i];
-        if (!warp) continue;
-        const x = i * warpGap + warpGap / 2;
-        ctx.strokeStyle = warp.color;
-        ctx.lineWidth = warp.width;
-        ctx.globalAlpha = warp.alpha;
+      // Weave upside-down: finished cloth climbs, the loom works at the base.
+      ctx.save();
+      ctx.translate(0, H);
+      ctx.scale(1, -1);
+
+      // drifting sheen
+      const sx = (Math.sin(now * 0.00012) * 0.5 + 0.5) * W;
+      const sheen = ctx.createLinearGradient(sx - W * 0.6, 0, sx + W * 0.6, H);
+      sheen.addColorStop(0, 'rgba(255,245,225,0)');
+      sheen.addColorStop(0.5, 'rgba(255,245,225,0.045)');
+      sheen.addColorStop(1, 'rgba(255,245,225,0)');
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, W, H);
+
+      let shedMix = shed;
+      if (t > BEAT_END) shedMix = shed * (2 * easeOutCubic((t - BEAT_END) / (1 - BEAT_END)) - 1) * -1;
+
+      // warp threads — lit in the shed above the fell, dim behind the cloth below
+      for (let i = 0; i < COUNT; i++) {
+        const x = i * WPX + WPX / 2;
+        const raised = ((i & 1) === 0 ? 1 : -1) * shedMix;
+        const lit = 0.5 + raised * 0.32;
+        ctx.strokeStyle = THEME.warp;
+        ctx.globalAlpha = 0.34 + lit * 0.4 + warpJitter[i]! * 0.08;
+        ctx.lineWidth = 1.1 + lit * 0.7;
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
+        ctx.lineTo(x, FELL);
         ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-
-      // 2) Woven cloth region (below the fell line)
-      // Darker navy background of finished cloth.
-      ctx.fillStyle = CLOTH;
-      ctx.globalAlpha = WOVEN_BG_OPACITY;
-      ctx.fillRect(0, fellY, w, h - fellY);
-      ctx.globalAlpha = 1;
-
-      // Animated beat-up: rows shift downward by (t * rowGap) so new rows appear at the top.
-      const shift = t * rowGap;
-      const baseY = h - ROWS * rowGap + 8 - shift;
-
-      for (let r = 0; r < ROWS; r++) {
-        const y = baseY + r * rowGap;
-        if (y < fellY - rowGap || y > h + rowGap) continue;
-        const phase = r % 2;
-        const shade = r % 3 === 0 ? WEFT_SHADE : PAPER;
-
-        // Interlaced weft segments: only "over" portions render — warps cover the rest.
-        ctx.fillStyle = shade;
-        ctx.globalAlpha = 0.6;
-        for (let i = 0; i < WARP_COUNT + 1; i++) {
-          if ((i + phase) % 2 !== 0) continue;
-          const segX = i * warpGap - warpGap / 2;
-          ctx.fillRect(segX, y - 2, warpGap, 4);
-        }
-        ctx.globalAlpha = 1;
-
-        // Chaddar supplementary weft: richer 3-cycle border pattern
-        if (r % 3 === 0) {
-          ctx.fillStyle = RUST;
-          ctx.globalAlpha = 0.8;
-          ctx.fillRect(0, y - 2, warpGap * 6, 4);
-          ctx.fillRect(w - warpGap * 6, y - 2, warpGap * 6, 4);
-          ctx.globalAlpha = 1;
-        } else if (r % 3 === 1) {
-          ctx.fillStyle = GOLD;
-          ctx.globalAlpha = 0.65;
-          ctx.fillRect(warpGap, y - 2, warpGap * 4, 3);
-          ctx.fillRect(w - warpGap * 5, y - 2, warpGap * 4, 3);
-          ctx.globalAlpha = 1;
-        } else if (r % 6 === 2) {
-          ctx.fillStyle = GOLD;
-          ctx.globalAlpha = 0.5;
-          ctx.fillRect(warpGap * 19, y - 1, warpGap * 2, 2);
-          ctx.fillRect(w - warpGap * 21, y - 1, warpGap * 2, 2);
-          ctx.globalAlpha = 1;
-        }
-      }
-
-      // 3) Cloth depth shadow — vertical gradient darkening the bottom of the cloth.
-      const shadow = ctx.createLinearGradient(0, 0, 0, h);
-      shadow.addColorStop(0, 'rgba(15, 35, 64, 0)');
-      shadow.addColorStop(0.15, 'rgba(15, 35, 64, 0)');
-      shadow.addColorStop(1, 'rgba(15, 35, 64, 0.55)');
-      ctx.fillStyle = shadow;
-      ctx.fillRect(0, fellY, w, h - fellY);
-
-      // 4) Fell-line "pick" — horizontal gradient bars that travel with the shuttle.
-      // Three staggered bars (k=0,1,2) to fake beat-up.
-      for (let k = 0; k < 3; k++) {
-        const stagger = (t + k / 3) % 1;
-        const yBase = fellY + k * 2;
-        // Trails across 0→1 over the half-cycle, invisible on the return.
-        const visible = stagger < 0.5;
-        if (!visible) continue;
-        const progress = stagger * 2; // 0 to 1 across left→right
-        const xCenter = progress * w;
-        const trailW = w * 0.5;
-        const opacity = k === 0 ? 0.95 : 0.5;
-        // Opacity fade-in/out within the sweep for a soft edge.
-        const phaseFade = Math.sin(progress * Math.PI);
-
-        const grad = ctx.createLinearGradient(xCenter - trailW, 0, xCenter, 0);
-        grad.addColorStop(0, 'rgba(217, 201, 160, 0)');
-        grad.addColorStop(0.5, PICK_GLOW_A);
-        grad.addColorStop(1, PICK_GLOW_B);
-        ctx.fillStyle = grad;
-        ctx.globalAlpha = opacity * phaseFade;
-        ctx.fillRect(xCenter - trailW, yBase - (k === 0 ? 1.1 : 0.7), trailW, k === 0 ? 2.2 : 1.4);
-      }
-      ctx.globalAlpha = 1;
-
-      // 5) Shuttle — pointed oval with pirn, travels left→right in first half, returns in second half.
-      //    Bundle behavior: 0→0.45 moves across, 0.45→0.5 pause, 0.5→0.95 returns, 0.95→1 pause.
-      let shuttleX: number;
-      if (t < 0.45) shuttleX = -60 + (t / 0.45) * (w + 120);
-      else if (t < 0.5) shuttleX = w + 60;
-      else if (t < 0.95) shuttleX = w + 60 - ((t - 0.5) / 0.45) * (w + 120);
-      else shuttleX = -60;
-
-      const sY = fellY;
-      // trailing thread behind the shuttle (direction depends on travel direction)
-      ctx.strokeStyle = PAPER;
-      ctx.globalAlpha = 0.7;
-      ctx.lineWidth = 0.8;
-      const goingRight = t < 0.5;
-      ctx.beginPath();
-      ctx.moveTo(shuttleX + (goingRight ? -24 : 24), sY);
-      ctx.lineTo(shuttleX + (goingRight ? -80 : 80), sY);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      // shuttle body — outer dark oval, inner wood oval, center pirn dot
-      ctx.fillStyle = '#2a1810';
-      ctx.beginPath();
-      ctx.ellipse(shuttleX, sY, 32, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#5a3820';
-      ctx.beginPath();
-      ctx.ellipse(shuttleX, sY, 28, 3.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = PAPER;
-      ctx.beginPath();
-      ctx.arc(shuttleX, sY, 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 6) Heddle frames — two faint horizontal bars above the fell line, barely moving.
-      ctx.fillStyle = PAPER;
-      ctx.globalAlpha = 0.18;
-      const heddleSway = Math.sin(t * Math.PI * 2) * 0.5;
-      ctx.fillRect(0, h * 0.34 + heddleSway, w, 1.5);
-      ctx.fillRect(0, h * 0.365 - heddleSway, w, 1);
-
-      // 7) Reed — very subtle vertical comb near the fell line.
-      ctx.strokeStyle = PAPER;
-      ctx.globalAlpha = 0.08;
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < WARP_COUNT; i++) {
-        const x = i * warpGap + warpGap / 2;
+        ctx.strokeStyle = THEME.warpDim;
+        ctx.globalAlpha = 0.16;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x, h * 0.3);
-        ctx.lineTo(x, h * 0.42);
+        ctx.moveTo(x, FELL);
+        ctx.lineTo(x, H);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
+      ctx.fillStyle = warpFade;
+      ctx.fillRect(0, 0, W, FELL);
+
+      // heddle bars
+      ctx.fillStyle = THEME.warp;
+      ctx.globalAlpha = 0.22;
+      ctx.fillRect(0, HEDDLE - 8 - shedMix * 5, W, 2);
+      ctx.fillRect(0, HEDDLE + 8 + shedMix * 5, W, 1.5);
+      ctx.globalAlpha = 1;
+
+      // cloth: commit the pick on beat, then glide on the take-up
+      if (t >= FLY_END && !committed) {
+        commitRow();
+        shed = -shed;
+        committed = true;
+      }
+      const glide = committed ? easeOutCubic(Math.min(1, (t - FLY_END) / (1 - FLY_END))) : 1;
+      const clothY = FELL - ROW_H * (1 - glide);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, FELL, W, H - FELL);
+      ctx.clip();
+      ctx.drawImage(cloth, 0, 0, cloth.width, cloth.height, 0, clothY, W, CLOTH_H);
+      ctx.fillStyle = depthShadow;
+      ctx.fillRect(0, FELL, W, H - FELL);
+      ctx.restore();
+
+      // weft yarn in flight — sags, then is beaten down into the fell
+      const rowColor = pattern(grow, midCol, COUNT) || THEME.warp;
+      const fromX = dirRight ? 0 : W;
+      let yarnY = FELL - 10;
+      let yarnTipX = fromX;
+      if (t < FLY_END) {
+        const p = easeInOutCubic(t / FLY_END);
+        yarnTipX = dirRight ? p * (W + 80) - 40 : W - p * (W + 80) + 40;
+      } else {
+        yarnTipX = dirRight ? W + 40 : -40;
+        yarnY = FELL - 10 + 10 * easeOutCubic(Math.min(1, (t - FLY_END) / (BEAT_END - FLY_END)));
+      }
+      ctx.strokeStyle = THEME.glow;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(fromX, yarnY);
+      ctx.quadraticCurveTo((fromX + yarnTipX) / 2, yarnY + (t < FLY_END ? 5 : 1), yarnTipX, yarnY);
+      ctx.stroke();
+      ctx.strokeStyle = rowColor;
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // shuttle — luminous trail, rim-lit body, pirn showing through
+      if (t < FLY_END) {
+        const sX = yarnTipX;
+        const sY = FELL - 10;
+        const trailW = W * 0.3;
+        const dir = dirRight ? -1 : 1;
+        const trail = ctx.createLinearGradient(sX + dir * trailW, 0, sX, 0);
+        trail.addColorStop(0, 'rgba(255,240,210,0)');
+        trail.addColorStop(1, 'rgba(255,240,210,0.35)');
+        ctx.fillStyle = trail;
+        ctx.fillRect(Math.min(sX, sX + dir * trailW), sY - 3, trailW, 6);
+        ctx.fillStyle = '#1a0d05';
+        ctx.beginPath();
+        ctx.ellipse(sX, sY, 40, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#7a4a26';
+        ctx.beginPath();
+        ctx.ellipse(sX, sY, 35, 5.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = THEME.glow;
+        ctx.globalAlpha = 0.7;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(sX, sY - 1, 36, 4.5, 0, Math.PI * 1.05, Math.PI * 1.95);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = rowColor;
+        ctx.beginPath();
+        ctx.ellipse(sX, sY, 9, 2.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // reed comb — swings down to beat the weft into the fell
+      let reedY = HEDDLE + 14;
+      if (t >= FLY_END && t < BEAT_END) {
+        const p = (t - FLY_END) / (BEAT_END - FLY_END);
+        const swing = p < 0.5 ? easeOutCubic(p * 2) : 1 - easeInOutCubic((p - 0.5) * 2);
+        reedY = HEDDLE + 14 + swing * (FELL - HEDDLE - 18);
+      }
+      ctx.strokeStyle = THEME.warp;
+      ctx.globalAlpha = 0.13;
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < COUNT; i += 2) {
+        const x = i * WPX + WPX / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, reedY);
+        ctx.lineTo(x, reedY + 26);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = THEME.warp;
+      ctx.fillRect(0, reedY - 3, W, 2.5);
+      ctx.globalAlpha = 1;
+
+      // fell line + beat flash
+      ctx.fillStyle = THEME.glow;
+      ctx.globalAlpha = 0.1;
+      ctx.fillRect(0, FELL - 1, W, 1.5);
+      ctx.globalAlpha = 1;
+      if (t >= FLY_END && t < BEAT_END + 0.06) {
+        const f = 1 - Math.abs((t - (FLY_END + BEAT_END) / 2) / ((BEAT_END - FLY_END) / 2));
+        ctx.fillStyle = THEME.glow;
+        ctx.globalAlpha = Math.max(0, f) * 0.35;
+        ctx.fillRect(0, FELL - 2, W, 3);
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.restore(); // end upside-down weave space
+
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, W, H);
     };
 
     let raf = 0;
-    let start = 0;
-
     const tick = (now: number) => {
-      if (!start) start = now;
-      const elapsed = now - start;
-      const t = (elapsed % CYCLE_MS) / CYCLE_MS;
-      drawFrame(t);
+      if (!lastTime) lastTime = now;
+      clock += now - lastTime;
+      lastTime = now;
+      if (clock >= CYCLE_MS) {
+        clock %= CYCLE_MS;
+        dirRight = !dirRight;
+        committed = false;
+      }
+      drawFrame(now, clock / CYCLE_MS);
       raf = requestAnimationFrame(tick);
     };
 
-    const onResize = () => resize();
-
     resize();
+    window.addEventListener('resize', resize);
     if (reduce) {
-      // Static frame at t=0.25 — shuttle mid-pass, cloth partially woven.
-      drawFrame(0.25);
+      drawFrame(0, 0.3); // static frame — shuttle mid-pass, cloth woven
     } else {
       raf = requestAnimationFrame(tick);
     }
 
-    window.addEventListener('resize', onResize);
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', resize);
     };
   }, [reduce]);
 
@@ -255,15 +464,8 @@ export function HeroWeaveCanvas() {
     <canvas
       ref={ref}
       role="img"
-      aria-label="Animated weaving loom depicting warp threads and a shuttle laying weft across the fell line"
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        position: 'absolute',
-        inset: 0,
-        transform: 'scaleY(-1)',
-      }}
+      aria-label="A handloom weaving a Solapur chaddar — warp threads, a flying shuttle, and the TDF flower motif emerging in the cloth"
+      style={{ width: '100%', height: '100%', display: 'block', position: 'absolute', inset: 0 }}
     />
   );
 }

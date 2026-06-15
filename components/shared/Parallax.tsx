@@ -18,5 +18,5 @@ export function Parallax({
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
   const translate = useTransform(scrollYProgress, [0, 1], [`${-50 * y}px`, `${50 * y}px`]);
   if (reduce) return <div ref={ref} className={className}>{children}</div>;
-  return <motion.div ref={ref} className={className} style={{ y: translate }}>{children}</motion.div>;
+  return <motion.div ref={ref} className={className} style={{ y: translate, willChange: 'transform' }}>{children}</motion.div>;
 }

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import styles from '@/styles/variants/v1.module.css';
+import { ScrollProgress } from '@/components/shared/ScrollProgress';
 import { Nav } from './Nav';
 import { Hero } from './Hero';
 import { About } from './About';
@@ -15,6 +16,7 @@ import { Footer } from './Footer';
 export function V1Page({ theme }: { theme?: CSSProperties }) {
   return (
     <div className={styles.root} style={theme}>
+      <ScrollProgress />
       <Nav />
       <main>
         <Hero />

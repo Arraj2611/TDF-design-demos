@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { useT } from '@/components/shared/LangProvider';
 import { Reveal } from '@/components/shared/Reveal';
+import { Parallax } from '@/components/shared/Parallax';
 import styles from '@/styles/variants/v1.module.css';
 
 function SolapurPostcard() {
@@ -101,9 +102,9 @@ export function Solapur() {
               </div>
             ))}
           </div>
-          <div className={styles.solapurPostcard}>
+          <Parallax y={0.5} className={clsx(styles.solapurPostcard)}>
             <SolapurPostcard />
-          </div>
+          </Parallax>
         </div>
 
         <div className={styles.solapurBody}>

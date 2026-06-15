@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { LangProvider } from '@/components/shared/LangProvider';
-import { caslon, plexSans, plexMono, fraunces, workSans, devanagari, playfair, slab, inter, spectral, plexSerif } from '@/lib/fonts';
+import { caslon, plexSans, plexMono, devanagari } from '@/lib/fonts';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${caslon.variable} ${plexSans.variable} ${plexMono.variable} ${fraunces.variable} ${workSans.variable} ${devanagari.variable} ${playfair.variable} ${slab.variable} ${inter.variable} ${spectral.variable} ${plexSerif.variable}`}
+      className={`${caslon.variable} ${plexSans.variable} ${plexMono.variable} ${devanagari.variable}`}
     >
       <body>
         <LangProvider>

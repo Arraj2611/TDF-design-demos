@@ -433,6 +433,7 @@ export function HeroWeaveCanvas() {
     };
 
     let raf = 0;
+    let io: IntersectionObserver | undefined;
     const tick = (now: number) => {
       if (!lastTime) lastTime = now;
       clock += now - lastTime;
@@ -452,10 +453,26 @@ export function HeroWeaveCanvas() {
       drawFrame(0, 0.3); // static frame — shuttle mid-pass, cloth woven
     } else {
       raf = requestAnimationFrame(tick);
+      // Stop the loom once it scrolls out of view — no CPU/battery spent off-screen.
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry) return;
+          if (entry.isIntersecting && !raf) {
+            lastTime = 0; // resume without a giant time delta
+            raf = requestAnimationFrame(tick);
+          } else if (!entry.isIntersecting && raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+        },
+        { threshold: 0 },
+      );
+      io.observe(canvas);
     }
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      io?.disconnect();
       window.removeEventListener('resize', resize);
     };
   }, [reduce]);

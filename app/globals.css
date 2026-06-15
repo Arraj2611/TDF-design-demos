@@ -14,8 +14,6 @@
   --font-sans: var(--font-plex-sans), system-ui, sans-serif;
   --font-serif: var(--font-caslon), Georgia, serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
-  --font-display: var(--font-fraunces), serif;
-  --font-workshop: var(--font-work-sans), sans-serif;
 }
 
 body {

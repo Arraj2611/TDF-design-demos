@@ -88,7 +88,7 @@ export function Nav() {
           </nav>
 
           <div className={styles.navRight}>
-            <BilingualToggle />
+            <BilingualToggle className={clsx(styles.navToggle)} />
             {/* Hamburger — visible only on mobile */}
             <button
               className={clsx(styles.navBurger, menuOpen && styles.navBurgerOpen)}

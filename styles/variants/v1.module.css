@@ -218,7 +218,11 @@
 .heroGrain {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle at 50% 60%, rgba(244, 237, 224, 0.06), transparent 60%);
+  /* Left-anchored scrim keeps the headline legible over the woven canvas while
+     the weave still reads on the right. */
+  background-image:
+    linear-gradient(95deg, rgba(8, 20, 40, 0.62) 0%, rgba(8, 20, 40, 0.28) 48%, rgba(8, 20, 40, 0) 82%),
+    radial-gradient(circle at 50% 60%, rgba(244, 237, 224, 0.06), transparent 60%);
   pointer-events: none;
 }
 .heroInner {
@@ -246,11 +250,12 @@
 .heroTitle {
   font-family: var(--font-caslon), Georgia, serif;
   font-weight: 400;
-  font-size: clamp(48px, 6.8vw, 96px);
-  line-height: 1.02;
+  font-size: clamp(32px, 6.8vw, 96px);
+  line-height: 1.04;
   letter-spacing: -0.02em;
   max-width: 14ch;
   margin-bottom: 28px;
+  overflow-wrap: break-word;
 }
 .heroTitle em {
   font-style: italic;
@@ -1662,8 +1667,10 @@
   .navLinks {
     display: none;
   }
-  /* Show hamburger, tighten right side */
-  .navBurger {
+  /* Show hamburger, tighten right side.
+     Scoped to .navRight so it outranks the later base `.navBurger { display:none }`
+     regardless of source order (specificity 0,2,0 > 0,1,0). */
+  .navRight .navBurger {
     display: flex;
   }
   .navRight {
@@ -1673,10 +1680,6 @@
   .chip {
     min-height: 44px;
     padding: 10px 14px;
-  }
-  .footSocialIcon {
-    width: 40px;
-    height: 40px;
   }
   .membersMeta {
     grid-template-columns: repeat(2, 1fr);
@@ -1690,6 +1693,24 @@
   .footTop {
     grid-template-columns: 1fr 1fr;
     gap: 32px;
+  }
+  /* Footer links: 44px tap targets on touch devices */
+  .foot ul {
+    gap: 2px;
+  }
+  .foot li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .footBottom :global(.right) a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  /* Dim the woven canvas a touch more so hero text stays legible on small screens */
+  .heroCanvasPlaceholder {
+    opacity: 0.42;
   }
   .facWrap {
     grid-template-columns: 1fr;
@@ -2109,8 +2130,8 @@
   margin-top: 20px;
 }
 .footSocialIcon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 1px solid rgba(244, 237, 224, 0.2);
   display: flex;
   align-items: center;
@@ -2185,5 +2206,15 @@
   /* Reduce large serif date number on event card */
   .efcD {
     font-size: 52px;
+  }
+}
+
+/* ===== Very small phones (≤ 360px) ===== */
+@media (max-width: 360px) {
+  /* The logo + language toggle + hamburger no longer fit on one row.
+     Drop the in-nav language toggle (still available inside the drawer) so
+     the hamburger stays on-screen and tappable. */
+  .navToggle {
+    display: none;
   }
 }
